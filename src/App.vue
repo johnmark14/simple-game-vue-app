@@ -6,20 +6,25 @@
     <section id="monster" class="container">
       <h2>Monster Health</h2>
       <div class="healthbar">
-        <div class="healthbar__value"></div>
+        <div class="healthbar__value" :style="monsterHealthBarStyle"></div>
       </div>
     </section>
 
     <section id="player" class="container">
       <h2>Your Health</h2>
       <div class="healthbar">
-        <div class="healthbar__value"></div>
+        <div class="healthbar__value" :style="playerHealthBarStyle"></div>
       </div>
     </section>
 
     <section id="controls">
-      <button>ATTACK</button>
-      <button>SPECIAL ATTACK</button>
+      <button @click.prevent="attackMonster">ATTACK</button>
+      <button
+        @click.prevent="specialAttackMonster"
+        :disabled="disabledSpecialAttackButton"
+      >
+        SPECIAL ATTACK
+      </button>
       <button>HEAL</button>
       <button>SURRENDER</button>
     </section>
@@ -39,21 +44,59 @@ export default {
   name: "App",
   data() {
     return {
+      myUseSpecialAttack: false,
+      currentRound: 0,
       monsterHealth: 100,
       playerHealth: 100
     };
   },
+  computed: {
+    monsterHealthBarStyle() {
+      return { width: this.monsterHealth + "%" };
+    },
+    playerHealthBarStyle() {
+      return { width: this.playerHealth + "%" };
+    },
+    disabledSpecialAttackButton() {
+      if (this.currentRound % 3 !== 0) {
+        return true;
+      } else {
+        return false;
+      }
+    }
+  },
   methods: {
     attackMonster() {
-      console.log("attack Monster click!");
+      this.currentRound++;
       const attackValue = getRandomValue(5, 12);
-      this.monsterHealth -= attackValue;
+      if (this.monsterHealth > 0) {
+        this.monsterHealth -= attackValue;
+      } else {
+        this.monsterHealth = 0;
+        this.currentRound = 3;
+      }
       this.attackPlayer();
+      console.log("attack Monster click! Health: " + this.monsterHealth);
     },
     attackPlayer() {
-      console.log("attack Player click!");
       const attackValue = getRandomValue(8, 15);
-      this.playerHealth -= attackValue;
+      if (this.monsterHealth > 0) {
+        this.playerHealth -= attackValue;
+      } else {
+        this.playerHealth = 0;
+        this.currentRound = 3;
+      }
+      console.log("attack Player click! Health: " + this.playerHealth);
+    },
+    specialAttackMonster() {
+      this.currentRound++;
+      const attackValue = getRandomValue(10, 25);
+      if (this.monsterHealth > 0) {
+        this.monsterHealth -= attackValue;
+      } else {
+        this.currentRound = 3;
+      }
+      this.attackPlayer();
     }
   }
 };
