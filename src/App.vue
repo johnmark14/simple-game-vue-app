@@ -9,18 +9,21 @@
         <div class="healthbar__value"></div>
       </div>
     </section>
+
     <section id="player" class="container">
       <h2>Your Health</h2>
       <div class="healthbar">
         <div class="healthbar__value"></div>
       </div>
     </section>
+
     <section id="controls">
       <button>ATTACK</button>
       <button>SPECIAL ATTACK</button>
       <button>HEAL</button>
       <button>SURRENDER</button>
     </section>
+
     <section id="log" class="container">
       <h2>Battle Log</h2>
       <ul></ul>
@@ -29,8 +32,30 @@
 </template>
 
 <script>
+function getRandomValue(min, max) {
+  return Math.floor(Math.random() * (max - min)) + min;
+}
 export default {
-  name: "App"
+  name: "App",
+  data() {
+    return {
+      monsterHealth: 100,
+      playerHealth: 100
+    };
+  },
+  methods: {
+    attackMonster() {
+      console.log("attack Monster click!");
+      const attackValue = getRandomValue(5, 12);
+      this.monsterHealth -= attackValue;
+      this.attackPlayer();
+    },
+    attackPlayer() {
+      console.log("attack Player click!");
+      const attackValue = getRandomValue(8, 15);
+      this.playerHealth -= attackValue;
+    }
+  }
 };
 </script>
 
