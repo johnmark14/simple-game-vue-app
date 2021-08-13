@@ -17,7 +17,15 @@
       </div>
     </section>
 
-    <section id="controls">
+    <section class="container" v-if="winner">
+      <h2>Gamer Over!</h2>
+      <h3 v-if="winner === 'monster'">You Lost!</h3>
+      <h3 v-else-if="winner === 'player'">You Win!</h3>
+      <h3 v-else>It's a Draw!</h3>
+      <button @click.prevent="startGame">Start New Game!</button>
+    </section>
+
+    <section id="controls" v-else>
       <button @click.prevent="attackMonster">ATTACK</button>
       <button
         @click.prevent="specialAttackMonster"
@@ -25,13 +33,31 @@
       >
         SPECIAL ATTACK
       </button>
-      <button>HEAL</button>
-      <button>SURRENDER</button>
+      <button @click.prevent="healPlayer">HEAL</button>
+      <button @click.prevent="surrender">SURRENDER</button>
     </section>
 
     <section id="log" class="container">
       <h2>Battle Log</h2>
-      <ul></ul>
+      <ul>
+        <li v-for="(log, index) in logMsg" v-bind:key="index">
+          <span
+            :class="{
+              'log--player': log.actionBy === 'player',
+              'log--monster': log.actionBy === 'monster',
+            }"
+            >{{ log.actionBy === "player" ? "player" : "monster" }}</span
+          >
+          <span v-if="log.actionType === 'heal'">
+            heals himself for
+            <span class="log--heal">{{ log.actionValue }}</span></span
+          >
+          <span v-else>
+            attacks and deals
+            <span class="log--damage">{{ log.actionValue }}</span></span
+          >
+        </li>
+      </ul>
     </section>
   </div>
 </template>
@@ -47,56 +73,95 @@ export default {
       myUseSpecialAttack: false,
       currentRound: 0,
       monsterHealth: 100,
-      playerHealth: 100
+      playerHealth: 100,
+      winner: null,
+      logMsg: []
     };
   },
   computed: {
     monsterHealthBarStyle() {
+      if (this.monsterHealth < 0) return { width: "0%" };
       return { width: this.monsterHealth + "%" };
     },
     playerHealthBarStyle() {
+      if (this.playerHealth < 0) return { width: "0%" };
       return { width: this.playerHealth + "%" };
     },
     disabledSpecialAttackButton() {
-      if (this.currentRound % 3 !== 0) {
-        return true;
-      } else {
-        return false;
-      }
+      return this.currentRound % 3 !== 0;
     }
   },
   methods: {
+    startGame() {
+      this.playerHealth = 100;
+      this.monsterHealth = 100;
+      this.winner = null;
+      this.currentRound = 0;
+      this.logMsg = [];
+    },
     attackMonster() {
       this.currentRound++;
       const attackValue = getRandomValue(5, 12);
-      if (this.monsterHealth > 0) {
-        this.monsterHealth -= attackValue;
-      } else {
-        this.monsterHealth = 0;
-        this.currentRound = 3;
-      }
+      this.monsterHealth -= attackValue;
       this.attackPlayer();
-      console.log("attack Monster click! Health: " + this.monsterHealth);
+      this.addLogMsg("player", "attack", attackValue);
+      // console.log("attack Monster click! Health: " + this.monsterHealth);
     },
     attackPlayer() {
       const attackValue = getRandomValue(8, 15);
-      if (this.monsterHealth > 0) {
-        this.playerHealth -= attackValue;
-      } else {
-        this.playerHealth = 0;
-        this.currentRound = 3;
-      }
-      console.log("attack Player click! Health: " + this.playerHealth);
+      this.playerHealth -= attackValue;
+      this.addLogMsg("monster", "attack", attackValue);
+      // console.log("attack Player click! Health: " + this.playerHealth);
     },
     specialAttackMonster() {
       this.currentRound++;
       const attackValue = getRandomValue(10, 25);
-      if (this.monsterHealth > 0) {
-        this.monsterHealth -= attackValue;
+      this.monsterHealth -= attackValue;
+      this.attackPlayer();
+      this.addLogMsg("player", "spacial-attack", attackValue);
+    },
+    healPlayer() {
+      this.currentRound++;
+      const healValue = getRandomValue(8, 20);
+      if (this.playerHealth + healValue > 100) {
+        this.playerHealth = 100;
       } else {
-        this.currentRound = 3;
+        this.playerHealth += healValue;
       }
       this.attackPlayer();
+      this.addLogMsg("player", "heal", healValue);
+    },
+    surrender() {
+      this.winner = "monster";
+    },
+    addLogMsg(who, what, value) {
+      this.logMsg.unshift({
+        actionBy: who,
+        actionType: what,
+        actionValue: value
+      });
+    }
+  },
+  watch: {
+    playerHealth(value) {
+      if (value <= 0 && this.monsterHealth <= 0) {
+        // A draw
+        this.winner = "draw";
+      } else if (value <= 0) {
+        // player lost
+        this.winner = "monster";
+      }
+      // console.log(this.winner);
+    },
+    monsterHealth(value) {
+      if (value <= 0 && this.playerHealth <= 0) {
+        // A draw
+        this.winner = "draw";
+      } else if (value <= 0) {
+        // monster lost
+        this.winner = "player";
+      }
+      // console.log(this.winner);
     }
   }
 };
